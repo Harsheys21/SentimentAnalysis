@@ -103,38 +103,36 @@ class LogisticRegressionClassifier(BinaryClassifier):
     
     def __init__(self):
         self.lr = 0.01
-        self.epochs = 100
+        self.epochs = 1000
         self.weights = None
+        self.lambd = 10
 
     def sigmoid(self, z):
         return 1 / (1 + np.exp(-z))
 
     def fit(self, X, Y):
-        X = np.array(X)
-        Y = np.array(Y)
+        n_samples, n_features = X.shape
+        self.weights = np.zeros(n_features)
+        self.bias = 0
         
-        # Add a column of ones for bias term
-        X = np.hstack((np.ones((X.shape[0], 1)), X))
-        
-        # initialize weights
-        self.weights = np.zeros(X.shape[1])
-
-        for epoch in range(self.epochs):
-            predictions = self.sigmoid(np.dot(X, self.weights))
-            errors = predictions - Y
-
-            # Compute gradient with regularization
-            gradient = np.dot(X.T, errors) / len(Y)
+        # Gradient descent
+        for _ in range(self.epochs):
+            linear_model = np.dot(X, self.weights) + self.bias
+            y_predicted = self.sigmoid(linear_model)
             
-            self.weights -= self.lr * gradient
-
+            # Compute gradients
+            dw = (1 / n_samples) * np.dot(X.T, (y_predicted - Y)) + (2*self.lambd * self.weights)
+            db = (1 / n_samples) * np.sum(y_predicted - Y)
+            
+            # Update parameters
+            self.weights -= self.lr * dw
+            self.bias -= self.lr * db
+    
     def predict(self, X):
-        X = np.array(X)
-        
-        # Add a column of ones to X for bias term
-        X = np.hstack((np.ones((X.shape[0], 1)), X))
-
-        return np.round(self.sigmoid(np.dot(X, self.weights)))
+        linear_model = np.dot(X, self.weights) + self.bias
+        y_predicted = self.sigmoid(linear_model)
+        y_predicted_cls = [1 if i > 0.5 else 0 for i in y_predicted]
+        return y_predicted_cls
 
 
 
